@@ -41,6 +41,14 @@ export const DEPT_COLORS = {
     light: 'bg-blue-50',
     hover: 'hover:bg-blue-100',
     accent: '#2563eb'
+  },
+  [Department.SYSTEM_ADMIN]: {
+    primary: 'bg-slate-900',
+    text: 'text-slate-900',
+    border: 'border-slate-900',
+    light: 'bg-slate-100',
+    hover: 'hover:bg-slate-200',
+    accent: '#0f172a'
   }
 };
 
@@ -59,6 +67,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { id: 'affairs', label: '訓育組', icon: '👨‍🏫', department: Department.STUDENT_AFFAIRS },
   { id: 'admin', label: '行政組', icon: '🏢', department: Department.ADMIN },
   { id: 'it', label: '資訊組', icon: '💻', department: Department.IT },
+  { id: 'sysadmin', label: '管理後台', icon: '🛡️', department: Department.SYSTEM_ADMIN },
 ];
 
 export const TOOLS: ToolMetadata[] = [
@@ -77,9 +86,7 @@ export const TOOLS: ToolMetadata[] = [
       { key: 'special', label: '特殊事項', type: 'text', placeholder: '例如：班長、校隊成員' },
       { key: 'tone', label: '語氣選擇', type: 'select', options: ['正式', '親切', '激勵'] }
     ],
-    promptTemplate: `請為學生 {{name}} 撰寫一份大約 150-200 字的專業期末評語。
-學業成績為 {{score}} 分，性格特質為 {{traits}}，特殊表現包括 {{special}}。
-請使用「{{tone}}」的語氣，包含正面鼓勵，並具體提出一項未來可改進的建議。`
+    promptTemplate: `請為學生 {{name}} 撰寫一份大約 150-200 字的專業期末評語。\n學業成績為 {{score}} 分，性格特質為 {{traits}}，特殊表現包括 {{special}}。\n請使用「{{tone}}」的語氣，包含正面鼓勵，並具體提出一項未來可改進的建議。`
   },
   {
     id: 'essay-grader',
@@ -94,16 +101,7 @@ export const TOOLS: ToolMetadata[] = [
       { key: 'grade', label: '年級', type: 'select', options: ['小一', '小二', '小三', '小四', '小五', '小六', '中一', '中二', '中三'] },
       { key: 'criteria', label: '評分重點', type: 'text', placeholder: '例如：修辭、結構、創意' }
     ],
-    promptTemplate: `請批改這篇 {{grade}} 年級學生的作文。
-重點評分項目為：{{criteria}}。
-作文內容：
-{{essay}}
-
-請輸出以下格式：
-1. 分項評分 (100滿分)
-2. 3-5項具體優點
-3. 3-5項改進建議
-4. 推薦佳句範例`
+    promptTemplate: `請批改這篇 {{grade}} 年級學生的作文。\n重點評分項目為：{{criteria}}。\n作文內容：\n{{essay}}\n\n請輸出以下格式：\n1. 分項評分 (100滿分)\n2. 3-5項具體優點\n3. 3-5項改進建議\n4. 推薦佳句範例`
   },
   {
     id: 'tone-checker',
@@ -117,15 +115,7 @@ export const TOOLS: ToolMetadata[] = [
       { key: 'content', label: '草擬內容', type: 'textarea', placeholder: '請輸入通知或公文內容...' },
       { key: 'audience', label: '目標對眾', type: 'select', options: ['全體家長', '全校教師', '全體學生', '校外單位'] }
     ],
-    promptTemplate: `這是一份發送給 {{audience}} 的學校公文草稿。
-請檢查並修正內容，使其符合正式行政規範。
-草稿內容：
-{{content}}
-
-請提供：
-1. 語氣專業度評分 (1-10)
-2. 標記過於口語或不當的詞句
-3. 修正後的完整版本`
+    promptTemplate: `這是一份發送給 {{audience}} 的學校公文草稿。\n請檢查並修正內容，使其符合正式行政規範。\n草稿內容：\n{{content}}\n\n請提供：\n1. 語氣專業度評分 (1-10)\n2. 標記過於口語或不當的詞句\n3. 修正後的完整版本`
   },
   {
     id: 'qr-generator-tool',
@@ -135,7 +125,7 @@ export const TOOLS: ToolMetadata[] = [
     department: Department.IT,
     tags: ['資訊組', '實用工具'],
     isBatchSupported: false,
-    inputs: [], // Custom tool
+    inputs: [],
     promptTemplate: ''
   },
   {
@@ -146,7 +136,7 @@ export const TOOLS: ToolMetadata[] = [
     department: Department.IT,
     tags: ['資訊組', '教學工具'],
     isBatchSupported: false,
-    inputs: [], // Custom tool
+    inputs: [],
     promptTemplate: ''
   }
 ];

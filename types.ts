@@ -4,7 +4,15 @@ export enum Department {
   ACADEMIC = 'academic',
   STUDENT_AFFAIRS = 'student_affairs',
   IT = 'it',
-  DASHBOARD = 'dashboard'
+  DASHBOARD = 'dashboard',
+  SYSTEM_ADMIN = 'system_admin'
+}
+
+export interface AdminUser {
+  name: string;
+  email: string;
+  picture: string;
+  role: 'admin' | 'superadmin';
 }
 
 export interface ToolMetadata {
@@ -32,8 +40,8 @@ export interface UsageLog {
   timestamp: string;
   toolId: string;
   toolName: string;
+  userEmail: string;
   inputData: any;
-  outputResult: string;
   status: 'success' | 'failed';
 }
 

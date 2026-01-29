@@ -1,44 +1,66 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ToolCard from './components/ToolCard';
 import ToolExecution from './components/ToolExecution';
-import { Department, ToolMetadata } from './types';
+import AdminPanel from './components/AdminPanel';
+import { Department, ToolMetadata, AdminUser } from './types';
 import { TOOLS, MENU_ITEMS } from './constants';
 
 const App: React.FC = () => {
   const [activeDept, setActiveDept] = useState<string>('dashboard');
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
-  // Find current tool metadata
+  // Initialize Google SSO
+  useEffect(() => {
+    // Only attempt if window.google is defined (loaded by index.html script)
+    if ((window as any).google) {
+      (window as any).google.accounts.id.initialize({
+        client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com", // Replace with real ID
+        callback: handleCredentialResponse,
+      });
+    }
+  }, []);
+
+  const handleCredentialResponse = (response: any) => {
+    // In a real app, you would decode the JWT and verify the payload
+    // We'll simulate a successful admin login for demo purposes
+    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+    setAdminUser({
+      name: payload.name,
+      email: payload.email,
+      picture: payload.picture,
+      role: payload.email.includes('admin') ? 'superadmin' : 'admin'
+    });
+  };
+
+  const handleLogout = () => {
+    setAdminUser(null);
+    setActiveDept('dashboard');
+  };
+
   const selectedTool = useMemo(() => 
     TOOLS.find(t => t.id === selectedToolId), 
     [selectedToolId]
   );
 
-  // Filter tools based on search and active department
   const filteredTools = useMemo(() => {
     let result = TOOLS;
-
-    // Filter by department if not dashboard
-    if (activeDept !== 'dashboard') {
-      // Handle sub-departments like academic-chinese
+    if (activeDept !== 'dashboard' && activeDept !== 'sysadmin') {
       if (activeDept.startsWith('academic-')) {
         const sub = activeDept.replace('academic-', '');
         result = result.filter(t => t.department === Department.ACADEMIC && t.tags.some(tag => tag.includes(sub === 'chinese' ? '中文' : sub === 'english' ? '英文' : '理科')));
       } else {
-        // Find if activeDept maps to a main department
         const menuItem = MENU_ITEMS.find(m => m.id === activeDept);
         if (menuItem?.department) {
           result = result.filter(t => t.department === menuItem.department);
         }
       }
     }
-
-    // Filter by search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(t => 
@@ -47,20 +69,19 @@ const App: React.FC = () => {
         t.tags.some(tag => tag.toLowerCase().includes(q))
       );
     }
-
     return result;
   }, [activeDept, searchQuery]);
 
-  const handleLaunchTool = (id: string) => {
-    setSelectedToolId(id);
-  };
-
   const handleDeptChange = (id: string) => {
     setActiveDept(id);
-    setSelectedToolId(null); // Clear tool selection when changing departments
+    setSelectedToolId(null);
   };
 
   const renderContent = () => {
+    if (activeDept === 'sysadmin') {
+      return <AdminPanel user={adminUser} onLogout={handleLogout} />;
+    }
+
     if (selectedTool) {
       return (
         <ToolExecution 
@@ -82,39 +103,21 @@ const App: React.FC = () => {
              MENU_ITEMS.find(m => m.children?.some(c => c.id === activeDept))?.children?.find(c => c.id === activeDept)?.label ||
              '所有工具'}
           </h1>
-          <p className="text-slate-500">
-            瀏覽並啟動最適合您的 AI 教學助手
-          </p>
+          <p className="text-slate-500">瀏覽並啟動最適合您的 AI 教學助手</p>
         </div>
-
-        {filteredTools.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredTools.map(tool => (
-              <ToolCard key={tool.id} tool={tool} onLaunch={handleLaunchTool} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-            <div className="text-6xl mb-4">🔍</div>
-            <p className="text-slate-400 font-medium">找不到符合條件的工具</p>
-            <button 
-              onClick={() => setSearchQuery('')}
-              className="mt-4 text-blue-600 font-bold hover:underline"
-            >
-              清除所有搜尋過濾
-            </button>
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredTools.map(tool => (
+            <ToolCard key={tool.id} tool={tool} onLaunch={id => setSelectedToolId(id)} />
+          ))}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className={`min-h-screen flex ${activeDept === 'sysadmin' ? 'bg-slate-900' : 'bg-slate-50'}`}>
       <Sidebar activeDept={activeDept} onDeptChange={handleDeptChange} />
-      
       <main className="flex-grow ml-64 p-8 min-h-screen">
-        {/* Header Section */}
         <header className="flex justify-between items-center mb-10">
           <div className="relative w-96 group">
             <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
@@ -124,31 +127,27 @@ const App: React.FC = () => {
             </span>
             <input 
               type="text" 
-              placeholder="搜尋工具、功能或分類... (Ctrl + K)"
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-slate-400"
+              placeholder="搜尋工具、功能或分類..."
+              className={`w-full pl-12 pr-4 py-3 border rounded-2xl shadow-sm outline-none transition-all placeholder-slate-400 ${activeDept === 'sysadmin' ? 'bg-slate-800 border-slate-700 text-white focus:ring-slate-600' : 'bg-white border-slate-200 focus:ring-blue-500'}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-
           <div className="flex items-center space-x-4">
-            <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-blue-600 hover:shadow-md transition-all relative">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            <button className="flex items-center space-x-2 bg-slate-900 text-white px-5 py-3 rounded-2xl hover:bg-slate-800 transition-all font-medium shadow-lg shadow-slate-900/10">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-              <span>系統連線中</span>
-            </button>
+             {adminUser ? (
+                <div className="flex items-center space-x-3 bg-white/10 backdrop-blur rounded-full px-4 py-2 border border-white/10">
+                  <img src={adminUser.picture} className="w-8 h-8 rounded-full" alt="avatar" />
+                  <span className="text-sm font-medium text-slate-300">{adminUser.name} (Admin)</span>
+                </div>
+             ) : (
+                <div className="flex items-center space-x-2 text-slate-500 text-sm">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                  <span>系統已連線</span>
+                </div>
+             )}
           </div>
         </header>
-
-        {/* Dynamic Content */}
-        <div className="max-w-7xl mx-auto">
-          {renderContent()}
-        </div>
+        <div className="max-w-7xl mx-auto">{renderContent()}</div>
       </main>
     </div>
   );
