@@ -1,0 +1,7 @@
+{
+  "name": "EduAI Hub - 學校 AI 工具站",
+  "description": "A comprehensive AI-powered platform for school administrators and teachers to streamline document processing, student reporting, and educational content generation.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
